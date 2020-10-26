@@ -1,7 +1,8 @@
 import React from 'react';
 import { ErrorMessage, Field, FieldProps, FormikProps } from 'formik';
 import { Dropdown, DropdownProps, Form } from 'semantic-ui-react';
-import { Diagnosis, EntryType } from '../types';
+import { EntryType } from '../types';
+import { useStateValue } from '../state';
 
 export type EntryTypeOption = {
   value: EntryType;
@@ -80,14 +81,14 @@ export const NumberField: React.FC<NumberProps> = ({
 );
 
 export const DiagnosisSelection = ({
-  diagnoses,
   setFieldValue,
   setFieldTouched,
 }: {
-  diagnoses: Diagnosis[];
   setFieldValue: FormikProps<{ diagnosisCodes: string[] }>['setFieldValue'];
   setFieldTouched: FormikProps<{ diagnosisCodes: string[] }>['setFieldTouched'];
 }) => {
+  const [{ diagnosis }] = useStateValue();
+
   const field = 'diagnosisCodes';
   const onChange = (
     _event: React.SyntheticEvent<HTMLElement, Event>,
@@ -97,7 +98,7 @@ export const DiagnosisSelection = ({
     setFieldValue(field, data.value);
   };
 
-  const stateOptions = diagnoses.map((diagnosis) => ({
+  const stateOptions = Object.values(diagnosis).map((diagnosis) => ({
     key: diagnosis.code,
     text: `${diagnosis.name} (${diagnosis.code})`,
     value: diagnosis.code,

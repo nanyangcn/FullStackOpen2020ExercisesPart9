@@ -14,8 +14,10 @@ import {
 } from '../types';
 import { apiBaseUrl } from '../constants';
 import { useStateValue, updatePatient } from '../state';
+import { addEntry } from '../state/reducer';
 
 const HealthCheck: React.FC<{ entry: HealthCheckEntry }> = ({ entry }) => {
+  const [{ diagnosis }] = useStateValue();
   const heartColor = () => {
     switch (entry.healthCheckRating) {
       case 0:
@@ -39,8 +41,17 @@ const HealthCheck: React.FC<{ entry: HealthCheckEntry }> = ({ entry }) => {
             <h4>
               {entry.date} <Icon name={'user md'} size='large' />
             </h4>
+            <p>specialist: {entry.specialist}</p>
             <i style={{ color: 'grey' }}>{entry.description}</i> <br />
             <Icon name='heart' color={heartColor()} />
+            <ul>
+              {entry.diagnosisCodes &&
+                entry.diagnosisCodes.map((code, i) => (
+                  <li key={i}>
+                    {code}: {diagnosis[code]?.name}
+                  </li>
+                ))}
+            </ul>
           </Table.Cell>
         </Table.Row>
       </Table.Body>
@@ -49,6 +60,8 @@ const HealthCheck: React.FC<{ entry: HealthCheckEntry }> = ({ entry }) => {
 };
 
 const Hospital: React.FC<{ entry: HospitalEntry }> = ({ entry }) => {
+  const [{ diagnosis }] = useStateValue();
+
   return (
     <Table celled>
       <Table.Body>
@@ -57,10 +70,19 @@ const Hospital: React.FC<{ entry: HospitalEntry }> = ({ entry }) => {
             <h4>
               {entry.date} <Icon name={'hospital'} size='large' />
             </h4>
+            <p>specialist: {entry.specialist}</p>
             <i style={{ color: 'grey' }}>{entry.description}</i>
             <p>
               {entry.discharge.date}: {entry.discharge.criteria}
             </p>
+            <ul>
+              {entry.diagnosisCodes &&
+                entry.diagnosisCodes.map((code, i) => (
+                  <li key={i}>
+                    {code}: {diagnosis[code]?.name}
+                  </li>
+                ))}
+            </ul>
           </Table.Cell>
         </Table.Row>
       </Table.Body>
@@ -71,6 +93,8 @@ const Hospital: React.FC<{ entry: HospitalEntry }> = ({ entry }) => {
 const OccupationalHealthcare: React.FC<{
   entry: OccupationalHealthcareEntry;
 }> = ({ entry }) => {
+  const [{ diagnosis }] = useStateValue();
+
   return (
     <Table celled>
       <Table.Body>
@@ -80,7 +104,21 @@ const OccupationalHealthcare: React.FC<{
               {entry.date} <Icon name={'stethoscope'} size='large' />{' '}
               {entry.employerName}
             </h4>
+            <p>specialist: {entry.specialist}</p>
             <i style={{ color: 'grey' }}>{entry.description}</i>
+            <p>
+              {entry.sickLeave && 'sick leave, '} start:{' '}
+              {entry.sickLeave && entry.sickLeave.startDate} , end:{' '}
+              {entry.sickLeave && entry.sickLeave.endDate}
+            </p>
+            <ul>
+              {entry.diagnosisCodes &&
+                entry.diagnosisCodes.map((code, i) => (
+                  <li key={i}>
+                    {code}: {diagnosis[code]?.name}
+                  </li>
+                ))}
+            </ul>
           </Table.Cell>
         </Table.Row>
       </Table.Body>
@@ -120,19 +158,18 @@ const PatientDetail: React.FC = () => {
     setError(undefined);
   };
 
-  const submitNewPatient = (values: NewEntry) => {
-    console.log(values);
-    // try {
-    //   const { data: newEntry } = await axios.post<Entry>(
-    //     `${apiBaseUrl}/patients`,
-    //     values
-    //   );
-    //   dispatch(addEntry(newEntry));
-    //   closeModal();
-    // } catch (e) {
-    //   console.error(e.response.data);
-    //   setError(e.response.data.error);
-    // }
+  const submitNewPatient = async (values: NewEntry) => {
+    try {
+      const { data: newEntry } = await axios.post<Entry>(
+        `${apiBaseUrl}/patients/${id}/entries`,
+        values
+      );
+      dispatch(addEntry(id, newEntry));
+      closeModal();
+    } catch (e) {
+      console.error(e.response.data);
+      setError(e.response.data.error);
+    }
   };
 
   const getPatientDetail = async () => {
